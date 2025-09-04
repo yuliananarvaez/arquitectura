@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mis pedidos</title>
+</head>
+<body>
+    <h1>Mis pedidos</h1>
+    {% if pedidos %}
+        <ul>
+            {% for pedido in pedidos %}
+                <li>
+                    <strong>{{ pedido.get_nombre() }}</strong> - Total: ${{ pedido.get_precio() }}
+                    <ul>
+                        {% for item in pedido.get_items() %}
+                            <li>{{ item.get_nombre() }} - ${{ item.get_precio() }}</li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No tienes pedidos aún.</p>
+    {% endif %}
+    <a href="/cliente">Volver a productos</a>
+</body>
+</html>

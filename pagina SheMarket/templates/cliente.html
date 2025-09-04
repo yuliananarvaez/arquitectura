@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cliente - Marketplace</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .product-card {
+      transition: all 0.3s ease;
+    }
+    .product-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .profile-menu {
+      transition: all 0.3s ease;
+      max-height: 0;
+      overflow: hidden;
+    }
+    .profile-menu.open {
+      max-height: 300px;
+    }
+    .chat-modal {
+      transition: all 0.3s ease;
+    }
+    .message {
+      max-width: 70%;
+      word-wrap: break-word;
+    }
+    .received {
+      background-color: #f1f1f1;
+      border-radius: 18px 18px 18px 0;
+    }
+    .sent {
+      background-color: #dcf8c6;
+      border-radius: 18px 18px 0 18px;
+    }
+    /* Estilos agregados del index */
+    .cart-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 101;
+      overflow-y: auto;
+    }
+    .cart-content {
+      background-color: #fff;
+      margin: 50px auto;
+      padding: 30px;
+      border-radius: 10px;
+      width: 85%;
+      max-width: 700px;
+      position: relative;
+    }
+    .cart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #ccc;
+      padding-bottom: 15px;
+    }
+    .cart-items {
+      list-style: none;
+      padding: 0;
+    }
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .cart-item:last-child {
+      border-bottom: none;
+    }
+    .cart-item img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      margin-right: 15px;
+      border-radius: 8px;
+    }
+    .cart-item-details {
+      flex-grow: 1;
+    }
+    .cart-item-actions {
+      display: flex;
+      align-items: center;
+    }
+    .quantity-controls {
+      display: flex;
+      align-items: center;
+      margin-right: 15px;
+    }
+    .cart-item-price {
+      font-weight: bold;
+      color: #e91e63;
+      font-size: 1.1em;
+    }
+    .cart-total {
+      text-align: right;
+      margin-top: 30px;
+      font-size: 1.4em;
+      font-weight: bold;
+      color: #333;
+    }
+    .checkout-options {
+      margin-top: 30px;
+      border-top: 2px solid #ccc;
+      padding-top: 20px;
+    }
+    .payment-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 102;
+    }
+    .payment-content {
+      background-color: #fff;
+      margin: 100px auto;
+      padding: 30px;
+      border-radius: 10px;
+      width: 80%;
+      max-width: 500px;
+      position: relative;
+    }
+    .payment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #ccc;
+      padding-bottom: 15px;
+    }
+    .invoice-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 103;
+      overflow-y: auto;
+    }
+    .invoice-content {
+      background-color: #fff;
+      margin: 30px auto;
+      padding: 30px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 800px;
+      position: relative;
+    }
+    .invoice-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .invoice-items {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    .invoice-items th, .invoice-items td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+    .invoice-items th {
+      background-color: #f0f0f0;
+      font-weight: bold;
+    }
+    .invoice-total {
+      text-align: right;
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #333;
+    }
+    /* Estilos para la sección de pedidos */
+    .orders-section {
+      transition: all 0.3s ease;
+    }
+    .order-card {
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 15px;
+    }
+    .status-badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .status-pendiente {
+      background-color: #ffecb3;
+      color: #ff8f00;
+    }
+    .status-proceso {
+      background-color: #bbdefb;
+      color: #9dbdf0;
+    }
+    .status-enviado {
+      background-color: #c8e6c9;
+      color: #388e3c;
+    }
+    .status-entregado {
+      background-color: #dcedc8;
+      color: #689f38;
+    }
+    .status-cancelado {
+      background-color: #ffcdd2;
+      color: #d32f2f;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Navbar -->
+  <nav class="bg-blue-400 p-4 text-white flex justify-between items-center">
+    <span class="font-bold text-xl">SheMarket</span>
+    <div class="flex items-center space-x-4">
+      <button 
+        class="cart-button bg-gray-200 hover:bg-gray-500 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors"
+        onclick="document.getElementById('cart-modal').style.display='block'"
+      >
+        Carrito (<span id="cart-count">0</span>)
+      </button>
+      <button 
+        onclick="toggleOrdersSection()"
+        class="bg-white-200 hover:bg-gray-500 text-white px-4 py-2 rounded-lg flex items-center"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd" />
+        </svg>
+        Mis Pedidos
+      </button>
+      <div class="relative">
+        <a 
+        href="index.html"
+        class="block px-4 py-2 text-gray-800 hover:bg-blue-50"
+      >
+        Salir
+          
+        <button 
+          id="profileButton"
+          class="flex items-center space-x-2 focus:outline-none"
+        >
+        
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+        </button>
+        <div id="profileMenu" class="profile-menu absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+          <div class="py-1">
+            <button 
+              onclick="openEditProfileModal()"
+              class="block w-full text-left px-4 py-2 text-gray-800 hover:bg-blue-50"
+            >
+              Editar Perfil
+            </button>
+            <button 
+              onclick="openDeleteAccountModal()"
+              class="block w-full text-left px-4 py-2 text-gray-800 hover:bg-blue-50"
+            >
+              Eliminar Cuenta
+            </button>
+            <a 
+              href="index.html"
+              class="block px-4 py-2 text-gray-800 hover:bg-blue-50"
+            >
+              Salir
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Contenido principal -->
+  <main class="p-4 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <!-- Barra lateral de perfil -->
+    <div class="lg:col-span-1 bg-white p-6 rounded-lg shadow-md h-fit sticky top-4">
+      <div class="text-center mb-4">
+        <div class="w-24 h-24 rounded-full bg-gray-200 mx-auto mb-3 overflow-hidden">
+          <img 
+            id="profileImage"
+            src="static/cliente.jpg" 
+            alt="Foto de perfil" 
+            class="w-full h-full object-cover"
+          >
+        </div>
+        <h2 id="profileName" class="text-xl font-bold text-gray-800">Juan Pérez</h2>
+        <p id="profileEmail" class="text-gray-600">juan@example.com</p>
+      </div>
+      <div class="space-y-2">
+        <button 
+          onclick="openEditProfileModal()"
+          class="w-full bg-blue-100 text-blue-600 hover:bg-blue-200 px-4 py-2 rounded-lg transition-colors"
+        >
+          Editar Perfil
+        </button>
+        <button 
+          onclick="openDeleteAccountModal()"
+          class="w-full bg-red-100 text-red-600 hover:bg-red-200 px-4 py-2 rounded-lg transition-colors"
+        >
+          Eliminar Cuenta
+        </button>
+      </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="lg:col-span-3">
+      <!-- Sección de pedidos (oculta inicialmente) -->
+      <div id="ordersSection" class="orders-section hidden bg-white p-6 rounded-lg shadow-md mb-6">
+        <h2 class="text-xl font-semibold mb-4">Mis Pedidos</h2>
+        
+        <!-- Filtros -->
+        <div class="flex flex-wrap gap-4 mb-4">
+          <select id="orderFilter" class="px-3 py-2 border rounded" onchange="filterOrders()">
+            <option value="todos">Todos los estados</option>
+            <option value="pendiente">Pendientes</option>
+            <option value="proceso">En proceso</option>
+            <option value="enviado">Enviados</option>
+            <option value="entregado">Entregados</option>
+          </select>
+          <input type="date" id="orderDateFilter" class="px-3 py-2 border rounded" onchange="filterOrders()">
+        </div>
+        
+        <!-- Lista de pedidos -->
+        <div id="ordersList" class="space-y-4">
+          <!-- Los pedidos se cargarán aquí dinámicamente -->
+        </div>
+      </div>
+      
+      <!-- Barra de búsqueda -->
+      <div class="mb-6">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Buscar productos..." 
+          class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+      </div>
+      
+      <!-- Listado de productos -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8" id="productsGrid">
+        <!-- Producto 1 -->
+        <div class="product-card bg-white p-4 rounded-lg shadow-md">
+           <img src="static/camisetapremium.jpg" alt="Camiseta Premium" 
+                         class="w-full h-48 object-cover rounded-lg mb-3">
+          <h2 class="text-lg font-semibold mb-1 text-gray-800">Camiseta Premium</h2>
+          <p class="text-gray-600 text-sm mb-2">Camiseta 100% algodón, disponible en varios colores</p>
+          <p class="font-bold text-blue-600 mb-3">$45.000</p>
+          <div class="flex space-x-2">
+            <button 
+              onclick="addToCart({ name: 'Camiseta Premium', price: 45000, image: 'https://via.placeholder.com/300x200?text=Camiseta+Premium' })" 
+              class="flex-1 bg-blue-400 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Agregar al carrito
+            </button>
+            <button 
+              onclick="openChat('María Gómez', 'https://via.placeholder.com/150?text=M')" 
+              class="flex-1 bg-gray-400 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Contactar
+            </button>
+          </div>
+        </div>
+        
+        <!-- Producto 2 -->
+        <div class="product-card bg-white p-4 rounded-lg shadow-md">
+          <img 
+            src="static/zapatos.jpg" 
+            alt="Zapatos Deportivos" 
+            class="w-full h-48 object-cover rounded-lg mb-3"
+          >
+          <h2 class="text-lg font-semibold mb-1 text-gray-800">Zapatos Deportivos</h2>
+          <p class="text-gray-600 text-sm mb-2">Zapatos para running, tallas 36-44</p>
+          <p class="font-bold text-blue-600 mb-3">$120.000</p>
+          <div class="flex space-x-2">
+            <button 
+              onclick="addToCart({ name: 'Zapatos Deportivos', price: 120000, image: 'https://via.placeholder.com/300x200?text=Zapatos+Deportivos' })" 
+              class="flex-1 bg-blue-400 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Agregar al carrito
+            </button>
+            <button 
+              onclick="openChat('Carlos Díaz', 'https://via.placeholder.com/150?text=C')" 
+              class="flex-1 bg-gray-400 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Contactar
+            </button>
+          </div>
+        </div>
+        
+        <!-- Productos de belleza del index -->
+        <div class="product-card bg-white p-4 rounded-lg shadow-md">
+          <img 
+            src="static/serum.jpg" 
+            alt="Serum Facial" 
+            class="w-full h-48 object-cover rounded-lg mb-3"
+          >
+          <h2 class="text-lg font-semibold mb-1 text-gray-800">Serum Facial Revitalizante</h2>
+          <p class="text-gray-600 text-sm mb-2">Un serum ligero que hidrata profundamente y reduce los signos de la edad.</p>
+          <p class="font-bold text-blue-600 mb-3">$25.990</p>
+          <div class="flex space-x-2">
+            <button 
+              onclick="addToCart({ name: 'Serum Facial Revitalizante', price: 25990, image: 'https://via.placeholder.com/60/ffb6c1/fff?Text=SF' })" 
+              class="flex-1 bg-blue-400 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Agregar al carrito
+            </button>
+            <button 
+              onclick="openChat('Ana López', 'https://via.placeholder.com/150?text=A')" 
+              class="flex-1 bg-gray-400 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Contactar
+            </button>
+          </div>
+        </div>
+        
+        <div class="product-card bg-white p-4 rounded-lg shadow-md">
+          <img 
+            src="static/labial.jpg" 
+            alt="Labial Rojo" 
+            class="w-full h-48 object-cover rounded-lg mb-3"
+          >
+          <h2 class="text-lg font-semibold mb-1 text-gray-800">Labial Rojo Intenso</h2>
+          <p class="text-gray-600 text-sm mb-2">Un clásico labial de larga duración con un acabado mate impecable.</p>
+          <p class="font-bold text-blue-600 mb-3">$15.500</p>
+          <div class="flex space-x-2">
+            <button 
+              onclick="addToCart({ name: 'Labial Rojo Intenso', price: 15500, image: 'https://via.placeholder.com/60/f08080/fff?Text=LR' })" 
+              class="flex-1 bg-blue-400 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Agregar al carrito
+            </button>
+            <button 
+              onclick="openChat('Luisa Martínez', 'https://via.placeholder.com/150?text=L')" 
+              class="flex-1 bg-gray-400 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Contactar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal Chat -->
+  <div id="chatModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden">
+      <!-- Encabezado del chat -->
+      <div class="bg-green-500 text-white p-4 flex items-center">
+        <button 
+          onclick="closeChat()"
+          class="mr-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+        </button>
+        <img 
+          id="chatSellerImage"
+          src="" 
+          alt="Vendedor" 
+          class="w-10 h-10 rounded-full mr-3"
+        >
+        <div>
+          <h2 id="chatSellerName" class="font-bold"></h2>
+          <p class="text-xs">En línea</p>
+        </div>
+        <a 
+          id="whatsappLink"
+          href="#" 
+          target="_blank"
+          class="ml-auto bg-white text-green-500 p-2 rounded-full"
+          title="Abrir en WhatsApp"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+          </svg>
+        </a>
+      </div>
+      
+      <!-- Cuerpo del chat -->
+      <div id="chatMessages" class="p-4 h-96 overflow-y-auto bg-gray-50">
+        <!-- Mensajes aparecerán aquí -->
+      </div>
+      
+      <!-- Entrada de mensaje -->
+      <div class="p-4 border-t bg-white">
+        <div class="flex">
+          <input 
+            type="text" 
+            id="chatInput"
+            placeholder="Escribe un mensaje..." 
+            class="flex-1 px-4 py-2 border rounded-l-lg focus:outline-none"
+          >
+          <button 
+            onclick="sendMessage()"
+            class="bg-green-500 text-white px-4 py-2 rounded-r-lg hover:bg-green-600 transition-colors"
+          >
+            Enviar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Perfil -->
+  <div id="editProfileModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+      <h2 class="text-xl font-bold mb-4 text-center">Editar Perfil</h2>
+      
+      <form id="editProfileForm" class="space-y-4">
+        <div>
+          <label class="block text-gray-700 mb-2">Nombre:</label>
+          <input 
+            type="text" 
+            id="editName"
+            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+        </div>
+        
+        <div>
+          <label class="block text-gray-700 mb-2">Correo electrónico:</label>
+          <input 
+            type="email" 
+            id="editEmail"
+            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+        </div>
+        
+        <div>
+          <label class="block text-gray-700 mb-2">Nueva contraseña (opcional):</label>
+          <input 
+            type="password" 
+            id="editPassword"
+            placeholder="Dejar en blanco para no cambiar"
+            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+        </div>
+        
+        <div>
+          <label class="block text-gray-700 mb-2">Confirmar contraseña actual:</label>
+          <input 
+            type="password" 
+            id="currentPassword"
+            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+        </div>
+        
+        <div class="flex space-x-2">
+          <button 
+            type="submit"
+            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+          >
+            Guardar Cambios
+          </button>
+          <button 
+            type="button"
+            onclick="closeEditProfileModal()"
+            class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Eliminar Cuenta -->
+  <div id="deleteAccountModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+      <h2 class="text-xl font-bold mb-4 text-center">Eliminar Cuenta</h2>
+      <p class="text-gray-700 mb-6">¿Estás seguro que deseas eliminar tu cuenta? Se enviará una solicitud al administrador para aprobar esta acción.</p>
+      
+      <form id="deleteAccountForm" class="space-y-4">
+        <div>
+          <label class="block text-gray-700 mb-2">Contraseña actual:</label>
+          <input 
+            type="password" 
+            id="deletePassword"
+            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+        </div>
+        
+        <div class="flex space-x-2">
+          <button 
+            type="submit"
+            class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+          >
+            Solicitar Eliminación
+          </button>
+          <button 
+            type="button"
+            onclick="closeDeleteAccountModal()"
+            class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Carrito (del index) -->
+  <div id="cart-modal" class="cart-modal">
+    <div class="cart-content">
+      <div class="cart-header">
+        <h2>Carrito de Compras</h2>
+        <button class="close-cart-button" onclick="document.getElementById('cart-modal').style.display='none'">&times;</button>
+      </div>
+      <ul class="cart-items" id="cart-items">
+      </ul>
+      <div class="cart-total" id="cart-total">
+        Total: $0
+      </div>
+      <div class="checkout-options">
+        <h3>¿Cómo deseas pagar?</h3>
+        <div class="payment-methods">
+          <button onclick="openPaymentModal('PSE')">PSE</button>
+          <button onclick="openPaymentModal('Nequi')">Nequi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Pago (del index) -->
+  <div id="payment-modal" class="payment-modal">
+    <div class="payment-content">
+      <div class="payment-header">
+        <h2 id="payment-method-title">Selecciona tu método de pago</h2>
+        <button class="close-payment-button" onclick="closePaymentModal()">&times;</button>
+      </div>
+      <form class="payment-form" id="paymentForm">
+        <div class="form-group" id="pse-fields">
+          <label for="pse-bank">Banco:</label>
+          <select id="pse-bank">
+            <option value="">Selecciona tu banco</option>
+            <option value="bancolombia">Bancolombia</option>
+            <option value="davivienda">Davivienda</option>
+            <option value="banco_de_bogota">Banco de Bogotá</option>
+          </select>
+        </div>
+        <div class="form-group" id="nequi-fields">
+          <label for="nequi-phone">Número de Nequi:</label>
+          <input type="tel" id="nequi-phone" placeholder="Tu número de celular">
+        </div>
+        <button type="button" onclick="simulatePayment()">Pagar Ahora</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Factura (del index) -->
+  <div id="invoice-modal" class="invoice-modal">
+    <div class="invoice-content">
+      <div class="invoice-header">
+        <h2>Factura de Compra</h2>
+        <button class="close-invoice-button" onclick="closeInvoiceModal()">&times;</button>
+      </div>
+      <div class="invoice-details">
+        <p><strong>Número de Factura:</strong> INV-20250423-001</p>
+        <p><strong>Fecha:</strong> 23 de Abril de 2025</p>
+        <p><strong>Cliente:</strong> Usuario Cliente (Simulado)</p>
+      </div>
+      <table class="invoice-items">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Precio Unitario</th>
+            <th>Cantidad</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="invoice-body">
+        </tbody>
+      </table>
+      <div class="invoice-total" id="invoice-total-final">
+        Total: $0
+      </div>
+      <p style="text-align: center; margin-top: 20px;">¡Gracias por tu compra!</p>
+    </div>
+  </div>
+
+  <script>
+    // Datos del usuario (simulados)
+    let userData = {
+      name: "Juan Pérez",
+      email: "juan@example.com",
+      password: "password123" // En una app real esto nunca se almacena así
+    };
+
+    // Carrito de compras (combinado)
+    let cart = [];
+    
+    // Datos del chat
+    let currentChat = {
+      sellerName: "",
+      sellerImage: "",
+      messages: []
+    };
+
+    // Datos de pedidos (simulados)
+    let orders = [
+      {
+        id: "ORD-001",
+        date: "2023-05-15",
+        status: "entregado",
+        products: [
+          { name: "Camiseta Premium", price: 45000, quantity: 2 },
+          { name: "Taza personalizada", price: 18000, quantity: 1 }
+        ],
+        total: 108000,
+        seller: "María Gómez"
+      },
+      {
+        id: "ORD-002",
+        date: "2023-05-20",
+        status: "enviado",
+        products: [
+          { name: "Zapatos Deportivos", price: 120000, quantity: 1 }
+        ],
+        total: 120000,
+        seller: "Carlos Díaz"
+      },
+      {
+        id: "ORD-003",
+        date: "2023-05-25",
+        status: "proceso",
+        products: [
+          { name: "Serum Facial Revitalizante", price: 25990, quantity: 1 },
+          { name: "Labial Rojo Intenso", price: 15500, quantity: 2 }
+        ],
+        total: 56990,
+        seller: "Ana López"
+      }
+    ];
+
+    // Mostrar/ocultar menú de perfil
+    document.getElementById('profileButton').addEventListener('click', function() {
+      document.getElementById('profileMenu').classList.toggle('open');
+    });
+
+    // Cerrar menú al hacer clic fuera
+    document.addEventListener('click', function(event) {
+      const profileMenu = document.getElementById('profileMenu');
+      const profileButton = document.getElementById('profileButton');
+      
+      if (!profileMenu.contains(event.target) && !profileButton.contains(event.target)) {
+        profileMenu.classList.remove('open');
+      }
+    });
+
+    // Cargar datos del perfil
+    function loadProfileData() {
+      document.getElementById('profileName').textContent = userData.name;
+      document.getElementById('profileEmail').textContent = userData.email;
+      document.getElementById('editName').value = userData.name;
+      document.getElementById('editEmail').value = userData.email;
+    }
+
+    // Mostrar/ocultar sección de pedidos
+    function toggleOrdersSection() {
+      const section = document.getElementById('ordersSection');
+      section.classList.toggle('hidden');
+      
+      if (!section.classList.contains('hidden')) {
+        renderOrders();
+      }
+    }
+
+    // Renderizar pedidos
+    function renderOrders(filteredOrders = null) {
+      const ordersToRender = filteredOrders || orders;
+      const ordersList = document.getElementById('ordersList');
+      ordersList.innerHTML = '';
+      
+      if (ordersToRender.length === 0) {
+        ordersList.innerHTML = '<p class="text-gray-500 text-center py-4">No tienes pedidos con estos filtros</p>';
+        return;
+      }
+      
+      ordersToRender.forEach(order => {
+        const orderElement = document.createElement('div');
+        orderElement.className = 'order-card bg-white p-4 rounded-lg shadow-md';
+        
+        // Encabezado del pedido
+        const orderHeader = document.createElement('div');
+        orderHeader.className = 'flex justify-between items-center mb-3';
+        
+        const orderInfo = document.createElement('div');
+        orderInfo.innerHTML = `
+          <h3 class="font-bold">Pedido ${order.id}</h3>
+          <p class="text-sm text-gray-600">Fecha: ${formatDate(order.date)}</p>
+          <p class="text-sm">Vendedor: ${order.seller}</p>
+        `;
+        
+        const orderStatus = document.createElement('div');
+        orderStatus.className = `status-badge status-${order.status}`;
+        orderStatus.textContent = getStatusText(order.status);
+        
+        orderHeader.appendChild(orderInfo);
+        orderHeader.appendChild(orderStatus);
+        
+        // Productos del pedido
+        const productsList = document.createElement('div');
+        productsList.className = 'mb-3';
+        
+        const productsTitle = document.createElement('p');
+        productsTitle.className = 'font-semibold mb-2';
+        productsTitle.textContent = 'Productos:';
+        
+        const productsItems = document.createElement('ul');
+        productsItems.className = 'list-disc pl-5 space-y-1';
+        
+        order.products.forEach(product => {
+          const productItem = document.createElement('li');
+          productItem.className = 'text-sm';
+          productItem.textContent = `${product.name} (x${product.quantity}) - $${formatCurrency(product.price)} c/u`;
+          productsItems.appendChild(productItem);
+        });
+        
+        productsList.appendChild(productsTitle);
+        productsList.appendChild(productsItems);
+        
+        // Total del pedido
+        const orderTotal = document.createElement('div');
+        orderTotal.className = 'flex justify-between items-center pt-3 border-t';
+        
+        const totalLabel = document.createElement('p');
+        totalLabel.className = 'font-bold';
+        totalLabel.textContent = 'Total:';
+        
+        const totalAmount = document.createElement('p');
+        totalAmount.className = 'font-bold text-blue-600';
+        totalAmount.textContent = `$${formatCurrency(order.total)}`;
+        
+        orderTotal.appendChild(totalLabel);
+        orderTotal.appendChild(totalAmount);
+        
+        // Construir el elemento completo
+        orderElement.appendChild(orderHeader);
+        orderElement.appendChild(productsList);
+        orderElement.appendChild(orderTotal);
+        
+        ordersList.appendChild(orderElement);
+      });
+    }
+
+    // Filtrar pedidos
+    function filterOrders() {
+      const statusFilter = document.getElementById('orderFilter').value;
+      const dateFilter = document.getElementById('orderDateFilter').value;
+      
+      let filteredOrders = orders;
+      
+      // Filtrar por estado
+      if (statusFilter !== 'todos') {
+        filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
+      }
+      
+      // Filtrar por fecha
+      if (dateFilter) {
+        filteredOrders = filteredOrders.filter(order => order.date === dateFilter);
+      }
+      
+      renderOrders(filteredOrders);
+    }
+
+    // Obtener texto del estado
+    function getStatusText(status) {
+      const statusTexts = {
+        'pendiente': 'Pendiente',
+        'proceso': 'En proceso',
+        'enviado': 'Enviado',
+        'entregado': 'Entregado',
+        'cancelado': 'Cancelado'
+      };
+      return statusTexts[status] || status;
+    }
+
+    // Formatear fecha
+    function formatDate(dateString) {
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return new Date(dateString).toLocaleDateString('es-ES', options);
+    }
+
+    // Formatear moneda
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('es-CO').format(amount);
+    }
+
+    // Abrir modal editar perfil
+    function openEditProfileModal() {
+      document.getElementById('profileMenu').classList.remove('open');
+      document.getElementById('editProfileModal').classList.remove('hidden');
+    }
+
+    // Cerrar modal editar perfil
+    function closeEditProfileModal() {
+      document.getElementById('editProfileModal').classList.add('hidden');
+    }
+
+    // Abrir modal eliminar cuenta
+    function openDeleteAccountModal() {
+      document.getElementById('profileMenu').classList.remove('open');
+      document.getElementById('deleteAccountModal').classList.remove('hidden');
+    }
+
+    // Cerrar modal eliminar cuenta
+    function closeDeleteAccountModal() {
+      document.getElementById('deleteAccountModal').classList.add('hidden');
+    }
+
+    // Abrir chat con vendedor
+    function openChat(sellerName, sellerImage) {
+      currentChat = {
+        sellerName: sellerName,
+        sellerImage: sellerImage,
+        messages: [
+          {
+            text: `Hola, soy ${sellerName}. ¿En qué puedo ayudarte?`,
+            sender: 'seller',
+            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+          }
+        ]
+      };
+      
+      // Configurar modal de chat
+      document.getElementById('chatSellerName').textContent = sellerName;
+      document.getElementById('chatSellerImage').src = sellerImage;
+      document.getElementById('whatsappLink').href = `https://wa.me/573001234567?text=Hola%20${encodeURIComponent(sellerName)}%20vi%20tu%20producto%20en%20la%20tienda%20virtual`;
+      
+      // Mostrar mensajes
+      renderChatMessages();
+      
+      // Mostrar modal
+      document.getElementById('chatModal').classList.remove('hidden');
+    }
+
+    // Cerrar chat
+    function closeChat() {
+      document.getElementById('chatModal').classList.add('hidden');
+    }
+
+    // Renderizar mensajes del chat
+    function renderChatMessages() {
+      const chatContainer = document.getElementById('chatMessages');
+      chatContainer.innerHTML = '';
+      
+      currentChat.messages.forEach(message => {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `flex mb-3 ${message.sender === 'seller' ? 'justify-start' : 'justify-end'}`;
+        
+        const messageContent = document.createElement('div');
+        messageContent.className = `message p-3 ${message.sender === 'seller' ? 'received' : 'sent'}`;
+        
+        const messageText = document.createElement('p');
+        messageText.className = 'text-sm';
+        messageText.textContent = message.text;
+        
+        const messageTime = document.createElement('p');
+        messageTime.className = 'text-xs text-gray-500 text-right mt-1';
+        messageTime.textContent = message.time;
+        
+        messageContent.appendChild(messageText);
+        messageContent.appendChild(messageTime);
+        messageDiv.appendChild(messageContent);
+        chatContainer.appendChild(messageDiv);
+      });
+      
+      // Scroll al final
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // Enviar mensaje
+    function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const messageText = input.value.trim();
+      
+      if (messageText) {
+        // Agregar mensaje del usuario
+        currentChat.messages.push({
+          text: messageText,
+          sender: 'user',
+          time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+        });
+        
+        // Limpiar input
+        input.value = '';
+        
+        // Simular respuesta después de 1 segundo
+        setTimeout(() => {
+          currentChat.messages.push({
+            text: `Gracias por tu mensaje. Te responderé pronto.`,
+            sender: 'seller',
+            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+          });
+          renderChatMessages();
+        }, 1000);
+        
+        // Renderizar mensajes
+        renderChatMessages();
+      }
+    }
+
+    // Permitir enviar mensaje con Enter
+    document.getElementById('chatInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+
+    // Guardar cambios de perfil
+    document.getElementById('editProfileForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const name = document.getElementById('editName').value;
+      const email = document.getElementById('editEmail').value;
+      const newPassword = document.getElementById('editPassword').value;
+      const currentPassword = document.getElementById('currentPassword').value;
+      
+      // Validar contraseña actual
+      if (currentPassword !== userData.password) {
+        alert('La contraseña actual es incorrecta');
+        return;
+      }
+      
+      // Actualizar datos
+      userData.name = name;
+      userData.email = email;
+      
+      if (newPassword) {
+        userData.password = newPassword;
+      }
+      
+      // Actualizar UI
+      loadProfileData();
+      closeEditProfileModal();
+      alert('Perfil actualizado correctamente');
+    });
+
+    // Solicitar eliminación de cuenta
+    document.getElementById('deleteAccountForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const password = document.getElementById('deletePassword').value;
+      
+      // Validar contraseña
+      if (password !== userData.password) {
+        alert('La contraseña es incorrecta');
+        return;
+      }
+      
+      // Simular envío de solicitud al admin
+      alert('Se ha enviado una solicitud al administrador para eliminar tu cuenta. Te notificaremos cuando se procese.');
+      closeDeleteAccountModal();
+    });
+
+    // Funciones del carrito (del index)
+    function addToCart(item) {
+      const existingItem = cart.find(i => i.name === item.name);
+      if (existingItem) {
+        existingItem.quantity = (existingItem.quantity || 0) + 1;
+      } else {
+        item.quantity = 1;
+        cart.push(item);
+      }
+      updateCartDisplay();
+    }
+
+    function updateCartDisplay() {
+      const cartItemsElement = document.getElementById('cart-items');
+      const cartTotalElement = document.getElementById('cart-total');
+      const cartCountElement = document.getElementById('cart-count');
+      
+      cartItemsElement.innerHTML = '';
+      let total = 0;
+
+      cart.forEach(item => {
+        const listItem = document.createElement('li');
+        listItem.classList.add('cart-item');
+        listItem.innerHTML = `
+          <img src="${item.image}" alt="${item.name}">
+          <div class="cart-item-details">
+            <h4>${item.name}</h4>
+            <p>Precio: $${formatCurrency(item.price)}</p>
+          </div>
+          <div class="cart-item-actions">
+            <div class="quantity-controls">
+              <button onclick="changeQuantity('${item.name}', -1)">-</button>
+              <span>${item.quantity}</span>
+              <button onclick="changeQuantity('${item.name}', 1)">+</button>
+            </div>
+            <button class="remove-button" onclick="removeItem('${item.name}')">Eliminar</button>
+          </div>
+          <span class="cart-item-price">$${formatCurrency(item.price * item.quantity)}</span>
+        `;
+        cartItemsElement.appendChild(listItem);
+        total += item.price * item.quantity;
+      });
+
+      cartTotalElement.textContent = `Total: $${formatCurrency(total)}`;
+      cartCountElement.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+    }
+
+    function removeItem(itemName) {
+      cart = cart.filter(item => item.name !== itemName);
+      updateCartDisplay();
+    }
+
+    function changeQuantity(itemName, change) {
+      const item = cart.find(i => i.name === itemName);
+      if (item) {
+        item.quantity += change;
+        if (item.quantity < 1) {
+          removeItem(itemName);
+        } else {
+          updateCartDisplay();
+        }
+      }
+    }
+
+    function openPaymentModal(method) {
+      document.getElementById('payment-modal').style.display = 'block';
+      document.getElementById('payment-method-title').textContent = `Pagar con ${method}`;
+      document.getElementById('pse-fields').style.display = method === 'PSE' ? 'block' : 'none';
+      document.getElementById('nequi-fields').style.display = method === 'Nequi' ? 'block' : 'none';
+    }
+
+    function closePaymentModal() {
+      document.getElementById('payment-modal').style.display = 'none';
+    }
+
+    function simulatePayment() {
+      const paymentMethodTitle = document.getElementById('payment-method-title').textContent;
+      let paymentSuccessful = false;
+
+      if (paymentMethodTitle.includes('PSE')) {
+        const bank = document.getElementById('pse-bank').value;
+        if (bank) {
+          alert(`Pago simulado con PSE a través de ${bank} exitoso.`);
+          paymentSuccessful = true;
+        } else {
+          alert('Por favor, selecciona tu banco.');
+        }
+      } else if (paymentMethodTitle.includes('Nequi')) {
+        const phone = document.getElementById('nequi-phone').value;
+        if (phone) {
+          alert(`Pago simulado con Nequi al número ${phone} exitoso.`);
+          paymentSuccessful = true;
+        } else {
+          alert('Por favor, ingresa tu número de Nequi.');
+        }
+      }
+
+      if (paymentSuccessful && cart.length > 0) {
+        // Crear nuevo pedido
+        const newOrder = {
+          id: `ORD-${Date.now().toString().slice(-4)}`,
+          date: new Date().toISOString().split('T')[0],
+          status: "pendiente",
+          products: cart.map(item => ({
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity
+          })),
+          total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+          seller: "Vendedor Simulado" // En una app real esto vendría de los productos
+        };
+        
+        orders.unshift(newOrder); // Agregar al inicio del array
+        
+        generateInvoice();
+        closePaymentModal();
+        document.getElementById('cart-modal').style.display = 'none';
+        document.getElementById('invoice-modal').style.display = 'block';
+        cart = [];
+        updateCartDisplay();
+        
+        // Simular actualización de estado después de 5 segundos (para demostración)
+        setTimeout(() => {
+          newOrder.status = "proceso";
+          if (document.getElementById('ordersSection') && !document.getElementById('ordersSection').classList.contains('hidden')) {
+            renderOrders();
+          }
+        }, 5000);
+        
+        // Simular envío después de 10 segundos
+        setTimeout(() => {
+          newOrder.status = "enviado";
+          if (document.getElementById('ordersSection') && !document.getElementById('ordersSection').classList.contains('hidden')) {
+            renderOrders();
+          }
+        }, 10000);
+        
+        // Simular entrega después de 15 segundos
+        setTimeout(() => {
+          newOrder.status = "entregado";
+          if (document.getElementById('ordersSection') && !document.getElementById('ordersSection').classList.contains('hidden')) {
+            renderOrders();
+          }
+        }, 15000);
+        
+      } else if (paymentSuccessful && cart.length === 0) {
+        alert('El carrito está vacío.');
+      }
+    }
+
+    function generateInvoice() {
+      const invoiceBody = document.getElementById('invoice-body');
+      const invoiceTotalFinal = document.getElementById('invoice-total-final');
+      invoiceBody.innerHTML = '';
+      let totalInvoice = 0;
+
+      cart.forEach(item => {
+        const row = invoiceBody.insertRow();
+        const nameCell = row.insertCell();
+        const priceCell = row.insertCell();
+        const quantityCell = row.insertCell();
+        const totalCell = row.insertCell();
+
+        nameCell.textContent = item.name;
+        priceCell.textContent = formatCurrency(item.price);
+        quantityCell.textContent = item.quantity;
+        totalCell.textContent = formatCurrency(item.price * item.quantity);
+
+        totalInvoice += item.price * item.quantity;
+      });
+
+      invoiceTotalFinal.textContent = `Total: $${formatCurrency(totalInvoice)}`;
+    }
+
+    function closeInvoiceModal() {
+      document.getElementById('invoice-modal').style.display = 'none';
+    }
+
+    // Búsqueda de productos
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+      const searchTerm = e.target.value.toLowerCase();
+      const products = document.querySelectorAll('#productsGrid > div');
+      
+      products.forEach(product => {
+        const name = product.querySelector('h2').textContent.toLowerCase();
+        const description = product.querySelector('p').textContent.toLowerCase();
+        
+        if (name.includes(searchTerm) || description.includes(searchTerm)) {
+          product.style.display = 'block';
+        } else {
+          product.style.display = 'none';
+        }
+      });
+    });
+
+    // Cargar datos iniciales
+    window.addEventListener('DOMContentLoaded', function() {
+      loadProfileData();
+    });
+  </script>
+</body>
+</html>
+
+
+<ul>
+    {% for producto in productos %}
+        <li>
+            {{ producto.get_nombre() }} - ${{ producto.get_precio() }}
+            <a href="/agregar/{{ producto.get_nombre() }}">Agregar al pedido</a>
+        </li>
+    {% endfor %}
+</ul>
+

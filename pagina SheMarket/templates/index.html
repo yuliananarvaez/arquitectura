@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SheMarket</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .tab-hidden { display: none; }
+    .tab-active { 
+      background-color: #7caaf3;
+      color: white;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+  <div class="bg-white p-8 rounded shadow-md w-full max-w-sm">
+    <div class="flex mb-6">
+      <button id="loginTab" class="tab-active py-2 px-4 rounded-l border border-blue-400">Iniciar Sesión</button>
+      <button id="registerTab" class="py-2 px-4 rounded-r border border-blue-400">Registrarse</button>
+    </div>
+
+<!-- Login Form -->
+<div id="loginFormContainer">
+  <form id="loginForm">
+    <input type="email" name="email" placeholder="Correo electrónico" class="w-full mb-4 px-3 py-2 border rounded" required />
+    <input type="password" name="password" placeholder="Contraseña" class="w-full mb-4 px-3 py-2 border rounded" required />
+    <select name="role" class="w-full mb-4 px-3 py-2 border rounded" required>
+      <option value="cliente">Cliente</option>
+      <option value="emprendedor">Emprendedor</option>
+      <option value="admin">Administrador</option>
+    </select>
+    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded w-full hover:bg-blue-600">Iniciar Sesion</button>
+  </form>
+</div>
+
+    <!-- Register Form -->
+    <div id="registerFormContainer" class="tab-hidden">
+      <form id="registerForm">
+        <input type="text" placeholder="Nombre completo" class="w-full mb-4 px-3 py-2 border rounded" required />
+        <input type="email" placeholder="Correo electrónico" class="w-full mb-4 px-3 py-2 border rounded" required />
+        <input type="password" placeholder="Contraseña" class="w-full mb-4 px-3 py-2 border rounded" required />
+        <select id="userType" class="w-full mb-4 px-3 py-2 border rounded" required>
+          <option value="cliente">Cliente</option>
+          <option value="emprendedor">Emprendedor</option>
+        </select>
+        <div id="entrepreneurFields" class="hidden">
+          <input type="text" placeholder="Nombre del negocio" class="w-full mb-4 px-3 py-2 border rounded" />
+          <input type="text" placeholder="Teléfono de contacto" class="w-full mb-4 px-3 py-2 border rounded" />
+        </div>
+        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600">Registrarse</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+  // Toggle entre Login y Registro
+  document.getElementById('registerTab').addEventListener('click', function() {
+    this.classList.add('tab-active');
+    document.getElementById('loginTab').classList.remove('tab-active');
+    document.getElementById('loginFormContainer').classList.add('tab-hidden');
+    document.getElementById('registerFormContainer').classList.remove('tab-hidden');
+  });
+
+  document.getElementById('loginTab').addEventListener('click', function() {
+    this.classList.add('tab-active');
+    document.getElementById('registerTab').classList.remove('tab-active');
+    document.getElementById('registerFormContainer').classList.add('tab-hidden');
+    document.getElementById('loginFormContainer').classList.remove('tab-hidden');
+  });
+
+  // Mostrar campos adicionales para emprendedores
+  document.getElementById('userType').addEventListener('change', function() {
+    const entrepreneurFields = document.getElementById('entrepreneurFields');
+    entrepreneurFields.classList.toggle('hidden', this.value !== 'emprendedor');
+  });
+
+  // 🔹 Login con Flask
+  document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+
+    const response = await fetch("/login", {
+      method: "POST",
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Redirige según el rol que devuelva Flask
+      window.location.href = "/" + result.role;
+    } else {
+      alert("Credenciales inválidas, intenta de nuevo.");
+    }
+  });
+
+  // 🔹 Registro (lo dejamos igual por ahora)
+  document.getElementById('registerForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const role = document.getElementById('userType').value;
+    alert(`¡Registro exitoso como ${role}! Serás redirigido...`);
+    setTimeout(() => {
+      window.location.href = role === 'emprendedor' ? 'emprendedor.html' : 'cliente.html';
+    }, 1500);
+  });
+</script>
+
+</body>
+</html>
